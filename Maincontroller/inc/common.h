@@ -25,9 +25,9 @@
 ////////////////////////////////////////////////////
 // Attitude and Position Control pid parameters ////
 ////////////////////////////////////////////////////
-#define AC_ATTITUDE_CONTROL_ANGLE_ROLL_P                      3.0f
-#define AC_ATTITUDE_CONTROL_ANGLE_PITCH_P                     3.0f
-#define AC_ATTITUDE_CONTROL_ANGLE_YAW_P                       3.0f
+#define AC_ATTITUDE_CONTROL_ANGLE_ROLL_P                      4.5f
+#define AC_ATTITUDE_CONTROL_ANGLE_PITCH_P                     4.5f
+#define AC_ATTITUDE_CONTROL_ANGLE_YAW_P                       4.5f
 
 // default rate controller PID gains
 #ifndef AC_ATC_MULTI_RATE_PITCH_P
@@ -35,11 +35,11 @@
 #endif
 
 #ifndef AC_ATC_MULTI_RATE_PITCH_I
-  # define AC_ATC_MULTI_RATE_PITCH_I          0.3f
+  # define AC_ATC_MULTI_RATE_PITCH_I          0.15f
 #endif
 
 #ifndef AC_ATC_MULTI_RATE_PITCH_D
-  # define AC_ATC_MULTI_RATE_PITCH_D          0.003f
+  # define AC_ATC_MULTI_RATE_PITCH_D          0.0025f
 #endif
 
 #ifndef AC_ATC_MULTI_RATE_ROLL_P
@@ -47,11 +47,11 @@
 #endif
 
 #ifndef AC_ATC_MULTI_RATE_ROLL_I
-  # define AC_ATC_MULTI_RATE_ROLL_I           0.3f
+  # define AC_ATC_MULTI_RATE_ROLL_I           0.15f
 #endif
 
 #ifndef AC_ATC_MULTI_RATE_ROLL_D
-  # define AC_ATC_MULTI_RATE_ROLL_D           0.003f
+  # define AC_ATC_MULTI_RATE_ROLL_D           0.0025f
 #endif
 
 #ifndef AC_ATC_MULTI_RATE_RP_IMAX
@@ -165,7 +165,7 @@
 #endif
 
 #ifndef RANGEFINDER_GLITCH_ALT_CM
- # define RANGEFINDER_GLITCH_ALT_CM  200.0f      // amount of rangefinder change to be considered a glitch
+ # define RANGEFINDER_GLITCH_ALT_CM  30.0f      // amount of rangefinder change to be considered a glitch
 #endif
 
 #ifndef RANGEFINDER_GLITCH_NUM_SAMPLES

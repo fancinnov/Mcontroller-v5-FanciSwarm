@@ -153,7 +153,6 @@ void mode_autonav(void){
 			attitude->input_euler_angle_roll_pitch_euler_rate_yaw(pos_control->get_roll(), pos_control->get_pitch(), target_yaw_rate);
 		}
 		// call position controller
-		target_climb_rate = get_surface_tracking_climb_rate(target_climb_rate, pos_control->get_alt_target(), _dt);
 		pos_control->set_alt_target_from_climb_rate_ff(target_climb_rate, _dt, false);
 		pos_control->add_takeoff_climb_rate(takeoff_climb_rate, _dt);
 		pos_control->update_z_controller(get_pos_z(), get_vel_z());

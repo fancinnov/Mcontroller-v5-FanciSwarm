@@ -51,7 +51,7 @@ static bool gcs_connected=false;
 static bool offboard_connected=false;
 static bool force_autonav=false;
 
-static float accel_filt_hz=20;//HZ
+static float accel_filt_hz=10;//HZ
 static float gyro_filt_hz=20;//HZ
 static float mag_filt_hz=5;//HZ
 static float baro_filt_hz=2;//HZ
@@ -2777,6 +2777,7 @@ float get_non_takeoff_throttle(void)
 //      returns climb rate (in cm/s) which should be passed to the position controller
 // if use this function, we should set rangefinder_state.alt_healthy=true;
 static float target_rangefinder_alt=0.0f;   // desired altitude in cm above the ground
+static bool hit_target_rangefinder_alt=false;
 void set_target_rangefinder_alt(float alt_target){
 	target_rangefinder_alt=alt_target;
 }
@@ -2800,8 +2801,11 @@ float get_surface_tracking_climb_rate(float target_rate, float current_alt_targe
     uint32_t now = HAL_GetTick();
 
     // reset target altitude if this controller has just been engaged
-    if (now - last_call_ms > RANGEFINDER_TIMEOUT_MS && robot_sub_mode!=MODE_AUTONAV) {
-		target_rangefinder_alt = rangefinder_state.alt_cm + current_alt_target - current_alt;
+    if (now - last_call_ms > RANGEFINDER_TIMEOUT_MS) {
+    	if(robot_sub_mode!=MODE_AUTONAV){
+    		target_rangefinder_alt = rangefinder_state.alt_cm + current_alt_target - current_alt;
+    	}
+		hit_target_rangefinder_alt=false;
 	}
     last_call_ms = now;
 
@@ -2826,12 +2830,21 @@ float get_surface_tracking_climb_rate(float target_rate, float current_alt_targe
       reading
      */
     float glitch_cm = rangefinder_state.alt_cm - target_rangefinder_alt;
-    if (glitch_cm >= RANGEFINDER_GLITCH_ALT_CM) {
-        rangefinder_state.glitch_count = MAX(rangefinder_state.glitch_count+1,1);
-    } else if (glitch_cm <= -RANGEFINDER_GLITCH_ALT_CM) {
-        rangefinder_state.glitch_count = MIN(rangefinder_state.glitch_count-1,-1);
-    } else {
-        rangefinder_state.glitch_count = 0;
+    if(target_rangefinder_alt>20.0f){
+    	if(abs(glitch_cm)<10.0f){
+    		hit_target_rangefinder_alt=true;
+    	}
+    }
+    if(!hit_target_rangefinder_alt){
+    	rangefinder_state.glitch_count = 0;
+    }else{
+    	if (glitch_cm >= RANGEFINDER_GLITCH_ALT_CM) {
+			rangefinder_state.glitch_count = MAX(rangefinder_state.glitch_count+1,1);
+		} else if (glitch_cm <= -RANGEFINDER_GLITCH_ALT_CM) {
+			rangefinder_state.glitch_count = MIN(rangefinder_state.glitch_count-1,-1);
+		} else {
+			rangefinder_state.glitch_count = 0;
+		}
     }
     if (abs(rangefinder_state.glitch_count) >= RANGEFINDER_GLITCH_NUM_SAMPLES) {
         // shift to the new rangefinder reading
@@ -3440,9 +3453,9 @@ void usbsend_callback(void){
  * ***********************************
  * ***********************************/
 void Logger_Cat_Callback(void){
-	sdlog->Logger_Write("%8s ",//LOG_TIME
-			"t_ms");
-	osDelay(5);
+//	sdlog->Logger_Write("%8s ",//LOG_TIME
+//			"t_ms");
+//	osDelay(5);
 //	sdlog->Logger_Write("%8s %8s %8s %8s %8s %8s %8s ",//LOG_SENSOR
 //			"t_ms", "gyrox_t", "gyroy_t", "gyroz_t", "gyrox", "gyroy", "gyroz");
 //	osDelay(5);
@@ -3470,9 +3483,9 @@ void Logger_Cat_Callback(void){
 //	sdlog->Logger_Write("%8s %8s %8s %8s %8s %8s %8s %8s ",//LOG_RCIN
 //			"roll", "pitch", "yaw", "thr", "ch5", "ch6", "ch7", "ch8");
 //	osDelay(5);
-	sdlog->Logger_Write("%8s %8s %8s %8s ",//LOG_ANCHOR
-			"dis1", "dis2", "dis3", "dis4");
-	osDelay(5);
+//	sdlog->Logger_Write("%8s %8s %8s %8s ",//LOG_ANCHOR
+//			"dis1", "dis2", "dis3", "dis4");
+//	osDelay(5);
 	sdlog->Logger_Write("%8s %8s %8s %8s %8s %8s %8s %8s ",//LOG_TARGET
 			"pos_x_t", "pos_y_t", "vel_x_t", "vel_y_t", "acc_x_t", "acc_y_t", "acc_z_t", "acc_z");
 	osDelay(5);
@@ -3492,9 +3505,9 @@ void Logger_Cat_Callback(void){
  * ***********************************
  * ***********************************/
 void Logger_Data_Callback(void){
-	sdlog->Logger_Write("%8ld ",//LOG_TIME
-			HAL_GetTick());
-	osDelay(5);
+//	sdlog->Logger_Write("%8ld ",//LOG_TIME
+//			HAL_GetTick());
+//	osDelay(5);
 //	sdlog->Logger_Write("%8ld %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f ",//LOG_SENSOR
 //			HAL_GetTick(), attitude->rate_bf_targets().x, attitude->rate_bf_targets().y, attitude->rate_bf_targets().z, get_gyro_filt().x, get_gyro_filt().y, get_gyro_filt().z);
 //	osDelay(5);
@@ -3524,9 +3537,9 @@ void Logger_Data_Callback(void){
 //	sdlog->Logger_Write("%8d %8d %8d %8d %8d %8d %8d %8d ",//LOG_RCIN
 //			input_channel_roll(), input_channel_pitch(), input_channel_yaw(), input_channel_throttle(), input_channel_5(), input_channel_6(), input_channel_7(), input_channel_8());
 //	osDelay(5);
-	sdlog->Logger_Write("%8d %8d %8d %8d ",//LOG_ANCHOR
-			uwb->Anchordistance[0], uwb->Anchordistance[1], uwb->Anchordistance[2], uwb->Anchordistance[3]);
-	osDelay(5);
+//	sdlog->Logger_Write("%8d %8d %8d %8d ",//LOG_ANCHOR
+//			uwb->Anchordistance[0], uwb->Anchordistance[1], uwb->Anchordistance[2], uwb->Anchordistance[3]);
+//	osDelay(5);
 	sdlog->Logger_Write("%8.3f %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f ",//LOG_TARGET
 			pos_control->get_pos_target().x, pos_control->get_pos_target().y, pos_control->get_vel_target().x, pos_control->get_vel_target().y,	pos_control->get_accel_target().x, pos_control->get_accel_target().y, pos_control->get_accel_target().z, ekf_baro->accelz_ef);
 	osDelay(5);
