@@ -38,7 +38,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#define CCMRAM __attribute__((section(".ccmram")))
 #define CONSTRAIN(in, min, max)  (in > max ? max : (in < min ? min : in))
 #define ABS(a) ((a) > 0 ? (a) : -(a))
 
@@ -207,7 +207,6 @@ void uwb_position_update(void);
 void ekf_baro_alt(void);
 void ekf_rf_alt(void);
 void ekf_odom_xy(void);
-void ekf_opticalflow_xy(void);
 void ekf_gnss_xy(void);
 void throttle_loop(void);
 void get_tfmini_data(uint8_t buf);
@@ -235,10 +234,9 @@ void comm4_callback(uint8_t data);
 bool get_task_initialed(void);
 
 void comm_callback(void);
-void COMM1_Callback(void);//串口1中断回调函数
-void COMM2_Callback(void);//串口2中断回调函数
-void COMM3_Callback(void);//串口3中断回调函数
-void COMM4_Callback(void);//串口4中断回调函数
+void COMM1_Callback(void);//串口1中断DMA回调函数
+void COMM2_Callback(void);//串口2中断DMA回调函数
+void COMM4_Callback(void);//串口4中断DMA回调函数
 
 void TIM_400HZ_Callback(void);//400HZ定时器中断回调函数
 void TIM_200HZ_Callback(void);//200HZ定时器中断回调函数
@@ -351,7 +349,7 @@ void Baro_set_press_offset(float vel); //速度单位:m/s
 uint8_t get_lc302_data(uint8_t buf);//解析成功返回0,未解析完返回1,解析失败返回2
 
 //激光驱动
-void vl53lxx_init(void);
+bool vl53lxx_init(void);
 void vl53lxx_update(void);
 
 /***fram驱动函数为底层驱动，它的上层函数在Cpplibrary中的flash.h***/
@@ -510,6 +508,7 @@ void comm_send_data(void);//把缓冲区中的数据以非阻塞方式从MAVLINK
 extern uint8_t HeartBeatFlags;//判断EVENTBIT_HEARTBEAT_COMM_0~EVENTBIT_HEARTBEAT_COMM_4五个通道是否有心跳包接收
 
 //ADC
+void adc_init(void);
 void adc_update(void);			// 刷新全部adc数据
 float get_batt_volt(void);   	// 获取外部电池供电电压值，Unit:V
 float get_batt_current(void);	// 获取外部电池供电电流值，Unit:A
@@ -638,6 +637,7 @@ HAL_StatusTypeDef sbus_output_buf_delayms(uint8_t* buf, uint16_t size, uint32_t 
 void RC_Input_Init(uint8_t mode);//初始化遥控接收机（PPM/SBUS）
 void RC_Input_Loop(void);//接收遥控器数据
 void rc_range_cal(void);
+void reset_rc_channels(void);
 void set_rc_channels_override(bool set);//设置Mavlink覆盖遥控器信号
 bool get_rc_channels_override(void);//获取Mavlink覆盖遥控器信号
 void override_rc_channels(uint16_t *pwm_in);

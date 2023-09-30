@@ -61,10 +61,10 @@
  # define AC_ATC_MULTI_RATE_RP_FILT_HZ      20.0f
 #endif
 #ifndef AC_ATC_MULTI_RATE_YAW_P
- # define AC_ATC_MULTI_RATE_YAW_P           0.3f
+ # define AC_ATC_MULTI_RATE_YAW_P           0.1f
 #endif
 #ifndef AC_ATC_MULTI_RATE_YAW_I
- # define AC_ATC_MULTI_RATE_YAW_I           0.03f
+ # define AC_ATC_MULTI_RATE_YAW_I           0.15f
 #endif
 #ifndef AC_ATC_MULTI_RATE_YAW_D
  # define AC_ATC_MULTI_RATE_YAW_D           0.0f
@@ -149,7 +149,7 @@
  # define AUTO_LAND_SPEED              30.0f         // maximum vertical velocity down in cm/s
 #endif
 #ifndef PILOT_ACCEL_Z_DEFAULT
- # define PILOT_ACCEL_Z_DEFAULT       100.0f         // vertical acceleration in cm/s/s while altitude is under pilot control
+ # define PILOT_ACCEL_Z_DEFAULT       250.0f         // vertical acceleration in cm/s/s while altitude is under pilot control
 #endif
 
 #ifndef RANGEFINDER_GAIN_DEFAULT
@@ -169,7 +169,7 @@
 #endif
 
 #ifndef RANGEFINDER_GLITCH_NUM_SAMPLES
- # define RANGEFINDER_GLITCH_NUM_SAMPLES    3   // number of rangefinder glitches in a row to take new reading
+ # define RANGEFINDER_GLITCH_NUM_SAMPLES    40   // number of rangefinder glitches in a row to take new reading
 #endif
 
 #ifndef PILOT_TKOFF_ALT_DEFAULT
@@ -254,6 +254,7 @@ float ahrs_sin_pitch(void);					//俯仰角正弦值
 float ahrs_cos_yaw(void);					//偏航角余弦值
 float ahrs_sin_yaw(void);					//偏航角正弦值
 const Vector3f& get_accel_ef(void);			//地球坐标系下的三轴加速度
+const Vector3f& get_accel_ef_filt(void);	//滤波后地球坐标系下的三轴加速度
 const Vector3f& get_gyro_ef(void);			//地球坐标系下的三轴角速度
 const Vector3f& get_accel_correct(void);	//修正后的三轴机体加速度
 const Vector3f& get_gyro_correct(void);		//修正后的三轴机体角速度
@@ -416,7 +417,8 @@ extern Opticalflow_state opticalflow_state;
 typedef enum{
 	none=0,
 	tag=1,
-	anchor
+	anchor,
+	range
 }uwb_modes;
 
 typedef enum {

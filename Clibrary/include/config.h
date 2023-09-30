@@ -48,6 +48,7 @@
 #define RC_INPUT_RANGE 	1000.0f // 脉宽 1000us
 
 //串口模式
+#define CONFIG_COMM 0x00 //配置模式
 #define DEV_COMM 	0x01 //自定义模式
 #define MAV_COMM  	0x02 //Mavlink模式
 #define GPS_COMM  	0x03 //GPS模式
@@ -62,6 +63,7 @@
  * *************COMM_4:Serial串口4**********
  * @param:
  * COMM_0~COMM_4可以配置为下列可选参数,参数及其含义如下：
+ * (0)CONFIG_COMM 	可配置模式
  * (1)DEV_COMM 		自定义模式
  * (2)MAV_COMM  	Mavlink模式
  * (3)GPS_COMM  	GPS模式
@@ -81,7 +83,7 @@
 #define USE_MAG 1 // if use mag, set 1; if not use mag, set 0;
 
 //配置GPS
-#define USE_GPS 0 // if use gps, set 1; if not use gps, set 0;
+#define USE_GPS 1 // if use gps, set 1; if not use gps, set 0;
 
 //配置UWB
 #define USE_UWB 1 // if use uwb, set 1; if don't use uwb, set 0;
@@ -112,6 +114,6 @@
 #endif
 
 #define VERSION_HARDWARE 573
-#define VERSION_FIRMWARE 2023062101
+#define VERSION_FIRMWARE 2023093001
 
 #endif /* INCLUDE_CONFIG_H_ */

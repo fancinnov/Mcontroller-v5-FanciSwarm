@@ -127,7 +127,7 @@ osThreadId_t uwbTaskHandle;
 const osThreadAttr_t uwbTask_attributes = {
   .name = "uwbTask",
   .stack_size = 800 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityNormal1,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -307,6 +307,7 @@ void InitTask(void *argument)
   set_s2_baudrate(19200);
   set_s3_baudrate(115200);
   set_s4_baudrate(115200);
+  adc_init();
   FRAM_Init();
   update_dataflash();
   RC_Input_Init(RC_INPUT_SBUS);
@@ -412,7 +413,7 @@ void Loop400hzTask(void *argument)
 	  ahrs_update();
 	  ekf_baro_alt();
 	  /***Do not change code above and change or add new code below***/
-	  ekf_opticalflow_xy();
+	  ekf_gnss_xy();
 	  mode_update();
   }
   /* USER CODE END Loop400hzTask */
@@ -547,7 +548,7 @@ void GPSTask(void *argument)
   while(!initialed_task){
 	  osDelay(1000);
   }
-#if USE_GPS==0
+#if (!USE_GPS)||USE_UWB
 	osThreadTerminate(gpsTaskHandle);
 #endif
 	if(!GPS_Init(UM482)){// GPS_Init() task will block 10s
@@ -615,7 +616,7 @@ void TestTask(void *argument){
 	for(;;)							// NOTED: if codes need to loop, must add into for(;;){} or while(1){} or some other looper.
 	{
 	  debug();
-//	  vTaskGetInfo(loop400hzTaskHandle, &taskstatus, pdTRUE, eInvalid);
+//	  vTaskGetInfo(uwbTaskHandle, &taskstatus, pdTRUE, eInvalid);
 //	  usb_printf("freeHeapSize:%d, freeStackSize:%d\n", xPortGetFreeHeapSize(),taskstatus.usStackHighWaterMark);
 	  osDelay(100);
 	}

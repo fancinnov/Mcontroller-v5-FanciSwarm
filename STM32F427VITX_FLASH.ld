@@ -163,7 +163,17 @@ SECTIONS
     . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
-  } >RAM
+  } >CCMRAM
+  
+  .ccmram :
+  {
+  	. = ALIGN(4);
+  	__MALLOC_SYMBOLS = .;      
+  	*(.ccmram)
+  	*(.ccmramm*)
+  	. = ALIGN(4);
+  	__EMALLOC_SYMBOLS = .;      
+  } >CCMRAM
 
   /* Remove information from the compiler libraries */
   /DISCARD/ :

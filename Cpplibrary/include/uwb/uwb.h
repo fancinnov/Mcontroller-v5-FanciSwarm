@@ -16,27 +16,31 @@
 #include "common.h"
 #ifdef __cplusplus
 
-#define RX_BUF_LEN 24
+#define RX_BUF_LEN 127
 
 class UWB{
 public:
 	/// Constructor
 	UWB();
 	bool get_uwb_position=false;
+	bool get_uwb_distance=false;
 	int Anchordistance[4]={0};
+	int Tagdistance[127]={0};
 	uint16_t Anchorvolt[4]={0};
 	Vector3f uwb_position;
 	uint8_t TAG_ID=1;
+	uint8_t TARGET_ID=0;
 	bool uwb_init(void);
 	void uwb_update(void);
 	void config_uwb(uwb_modes mode, uint8_t id, uint8_t tag_master, uint8_t tag_start, uint8_t tag_max, uint8_t anchor_max);
 	void set_anchor_positon(uint8_t id, double x, double y, double z);
+	void uwb_send_data(uint8_t* data, uint8_t length);//length最大为127
 
 private:
 	/* Default communication configuration. We use here EVK1000's default mode (mode 3). */
 	dwt_config_t config =
 	{
-	    2,               /* Channel number. */
+	    5,               /* Channel number. */
 	    DWT_PRF_64M,     /* Pulse repetition frequency. */
 	    DWT_PLEN_1024,   /* Preamble length. */
 	    DWT_PAC32,       /* Preamble acquisition chunk size. Used in RX only. */
@@ -58,8 +62,9 @@ private:
 		release,
 		release_confirm,
 		release_wait,
-		time,
-		statistics
+		comm,
+		waiting,
+		ranging
 	}uwb_states;
 
 	/* Frames used in the ranging process. See NOTE 2 below. */
@@ -75,17 +80,17 @@ private:
 	uint8_t rx_poll_msg[8] =  	{0x41, 0x88, 0, 0x0, 0xDE, 0x21, 0, 0};
 	uint8_t tx_resp_msg[11] =  	{0x41, 0x88, 0, 0x0, 0xDE, 0x10, 0x02, 0, 0, 0, 0};
 	uint8_t rx_final_msg[20] = 	{0x41, 0x88, 0, 0x0, 0xDE, 0x23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-	uint8_t distance_msg[15] = 	{0x41, 0x88, 0, 0x0, 0xDE, 0xAA, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	uint8_t distance_msg[17] = 	{0x41, 0x88, 0, 0x0, 0xDE, 0xAA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	uint8_t tx_poll_msg[8] =  	{0x41, 0x88, 0, 0x0, 0xDE, 0x21, 0, 0};
 	uint8_t rx_resp_msg[11] =  	{0x41, 0x88, 0, 0x0, 0xDE, 0x10, 0x02, 0, 0, 0, 0};
 	uint8_t tx_final_msg[20] = 	{0x41, 0x88, 0, 0x0, 0xDE, 0x23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-	uint8_t time_msg[13] =  	{0x41, 0x88, 0, 0x0, 0xDE, 0x36, 0, 0, 0, 0, 0, 0, 0};
 	uint8_t angle_msg[27] =    	{0x41, 0x88, 0, 0x0, 0xDE, 0xFE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	uint8_t Semaphore_Release[9] =    				{0x41, 0x88, 0, 0x0, 0xDE, 0xE0, 0, 0, 0};
 	uint8_t Tag_Statistics[9] =                   	{0x41, 0x88, 0, 0x0, 0xDE, 0xE1, 0, 0, 0};
 	uint8_t Master_Release_Semaphore[9] =         	{0x41, 0x88, 0, 0x0, 0xDE, 0xE2, 0, 0, 0};
 	uint8_t Tag_Statistics_response[9] =          	{0x41, 0x88, 0, 0x0, 0xDE, 0xE3, 0, 0, 0};
 	uint8_t Master_Release_Semaphore_comfirm[9] = 	{0x41, 0x88, 0, 0x0, 0xDE, 0xE4, 0, 0, 0};
+	uint8_t comm_msg[RX_BUF_LEN+2];
 
 	/* Frame sequence number, incremented after each transmission. */
 	uint8_t frame_seq_nb = 0;
@@ -118,6 +123,7 @@ private:
 	/* Hold copies of computed time of flight and distance here for reference, so reader can examine it at a breakpoint. */
 	double tof;
 	double distance;
+	double distance_temp;
 
 	/* String used to display measured distance on LCD screen (16 characters maximum). */
 	char dist_str[16] = {0};
@@ -154,15 +160,16 @@ private:
 	uint8_t Semaphore_Enable = 0 ;
 	uint8_t Waiting_TAG_Release_Semaphore = 0;
 	uint32_t frame_len = 0;
-	uint32_t dis_time=0,tag_time=0;
-	bool last_tag=false;
+	uint32_t tag_time=0,wait_time=0;
+	uint8_t last_tag=0;
 	uwb_states uwb_state=idle;
 	uwb_modes uwb_mode=none;
 
-	bool init_uwb_tag=false, get_dis=false;
+	bool init_uwb_tag=false, get_dis=false, get_ka=false;
 	uint32_t final_tx_time;
 	uint32_t poll_tx_ts, resp_rx_ts, final_tx_ts;
 	uint32_t poll_rx_ts_32, resp_tx_ts_32, final_rx_ts_32;
+	uint32_t Ra_32, Db_32;
 	double Ra, Rb, Da, Db;
 	double tof_dtu;
 	uint32_t resp_tx_time;
@@ -176,6 +183,10 @@ private:
 	uint8_t delta_ts_anchor3_num=0;
 	bool get_all_tag_delta_ts=false;
 	uint16_t volt=0;
+	float R1,R2,R3,R4;
+	float x1,x2,x3,x4;
+	float y1,y2,y3,y4;
+	float z1,z2,z3,z4;
 };
 
 #endif
