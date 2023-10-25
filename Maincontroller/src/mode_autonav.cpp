@@ -69,6 +69,10 @@ void mode_autonav(void){
 		target_climb_rate=0.0f;
 	}
 
+	if(get_mag_lock_flag()>0){
+		target_yaw_rate=0.0f;
+	}
+
 	// Alt Hold State Machine Determination
 	if (!motors->get_armed()) {
 		althold_state = AltHold_MotorStopped;
@@ -275,7 +279,8 @@ void mode_autonav(void){
 				pos_control->update_xy_controller(_dt, get_pos_x(), get_pos_y(), get_vel_x(), get_vel_y());
 				attitude->input_euler_angle_roll_pitch_yaw(pos_control->get_roll(), pos_control->get_pitch(), target_yaw, true);
 				target_climb_rate=get_mav_vz_target();
-				if(get_mav_z_target()>=30.0f&&get_mav_z_target()<=200.0f){
+				if(get_mav_z_target()>=30.0f&&get_mav_z_target()<=200.0f&&rangefinder_state.alt_healthy){
+					pos_control->shift_alt_target(get_mav_z_target()-rangefinder_state.alt_cm);
 					set_target_rangefinder_alt(get_mav_z_target());
 				}
 			}

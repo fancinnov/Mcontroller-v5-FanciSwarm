@@ -86,9 +86,9 @@
 #define POSCONTROL_ACC_Z_FILT_HZ              20.0f   // vertical acceleration controller input filter default
 #define POSCONTROL_ACC_Z_DT                   0.0025f // vertical acceleration controller dt default
 #define POSCONTROL_POS_XY_P                   1.0f    // horizontal position controller P gain default 1.0
-#define POSCONTROL_VEL_XY_P                   1.5f    // horizontal velocity controller P gain default 2.0
-#define POSCONTROL_VEL_XY_I                   0.6f    // horizontal velocity controller I gain default 1.0
-#define POSCONTROL_VEL_XY_D                   0.6f    // horizontal velocity controller D gain default 0.5
+#define POSCONTROL_VEL_XY_P                   1.6f    // horizontal velocity controller P gain default 2.0
+#define POSCONTROL_VEL_XY_I                   0.4f    // horizontal velocity controller I gain default 1.0
+#define POSCONTROL_VEL_XY_D                   0.8f    // horizontal velocity controller D gain default 0.5
 #define POSCONTROL_VEL_XY_IMAX                100.0f  // horizontal velocity controller IMAX gain default 200
 #define POSCONTROL_VEL_XY_FILT_HZ             5.0f    // horizontal velocity controller input filter default 5.0
 #define POSCONTROL_VEL_XY_FILT_D_HZ           5.0f    // horizontal velocity controller input filter for D default 5.0
@@ -140,20 +140,20 @@
 #endif
 // default maximum vertical velocity and acceleration the pilot may request
 #ifndef PILOT_VELZ_UP_MAX
- # define PILOT_VELZ_UP_MAX              100.0f         // maximum vertical velocity up in cm/s
+ # define PILOT_VELZ_UP_MAX              50.0f         // maximum vertical velocity up in cm/s
 #endif
 #ifndef PILOT_VELZ_DOWN_MAX
- # define PILOT_VELZ_DOWN_MAX              50.0f         // maximum vertical velocity down in cm/s
+ # define PILOT_VELZ_DOWN_MAX              30.0f         // maximum vertical velocity down in cm/s
 #endif
 #ifndef AUTO_LAND_SPEED
- # define AUTO_LAND_SPEED              30.0f         // maximum vertical velocity down in cm/s
+ # define AUTO_LAND_SPEED              25.0f         // maximum vertical velocity down in cm/s
 #endif
 #ifndef PILOT_ACCEL_Z_DEFAULT
- # define PILOT_ACCEL_Z_DEFAULT       250.0f         // vertical acceleration in cm/s/s while altitude is under pilot control
+ # define PILOT_ACCEL_Z_DEFAULT       50.0f         // vertical acceleration in cm/s/s while altitude is under pilot control
 #endif
 
 #ifndef RANGEFINDER_GAIN_DEFAULT
- # define RANGEFINDER_GAIN_DEFAULT 0.8f     // gain for controlling how quickly rangefinder range adjusts target altitude (lower means slower reaction)
+ # define RANGEFINDER_GAIN_DEFAULT 0.3f     // gain for controlling how quickly rangefinder range adjusts target altitude (lower means slower reaction)
 #endif
 
 #ifndef THR_SURFACE_TRACKING_VELZ_MAX
@@ -201,7 +201,7 @@
 #define ACRO_YAW_P 1.5f
 #define MAN_THR_FILT_HZ 0.5f
 #define LOWBATT_RETURN_VOLT 0.0f
-#define LOWBATT_LAND_VOLT 7.0f
+#define LOWBATT_LAND_VOLT 6.4f
 #define POSHOLD_VEL_MAX 100.0f		//1m/s
 #define POSHOLD_ACCEL_MAX 100.0f	//1m/ss
 #define MISSION_VEL_MAX 100.0f		//1m/s
@@ -209,7 +209,7 @@
 #define ALT_RETURN	100.0f			//1m
 #define VOLTAGE_GAIN 1.0f
 #define CURRENT_GAIN 1.0f
-#define UWB_YAW_DELTA_DEG -98.0f
+#define UWB_YAW_DELTA_DEG 0.0f
 #define UWB_GAIN 1.0f
 #define UWB_TAG_ID 1U
 #define UWB_TAG_MAX 1U
@@ -240,6 +240,7 @@ bool get_thr_force_decrease(void);
 void set_thr_force_decrease(bool force_decrease);
 void compass_calibrate(void);
 bool get_force_autonav(void);
+uint16_t get_mag_lock_flag(void);
 
 float ahrs_pitch_rad(void);					//俯仰角弧度值
 float ahrs_roll_rad(void);					//滚转角弧度值

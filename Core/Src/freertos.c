@@ -377,7 +377,9 @@ void HeartBeatTask(void *argument)
   for(;;)
   {
 	  FMU_LED1_Control(true);
+#if COMM_0!=CONFIG_COMM
 	  send_mavlink_heartbeat_data();
+#endif
 	  osDelay(100);
 	  FMU_LED1_Control(false);
 	  sdled_update();
@@ -505,7 +507,11 @@ void Loop50hzTask(void *argument)
   for(;;)
   {
 	  osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
+#if COMM_0==CONFIG_COMM
+	  config_callback();
+#else
 	  comm_callback();
+#endif
 	  RC_Input_Loop();
 	  adc_update();
 	  uwb_position_update();
