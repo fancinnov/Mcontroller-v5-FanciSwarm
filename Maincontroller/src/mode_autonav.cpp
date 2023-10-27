@@ -304,7 +304,7 @@ void mode_autonav(void){
 			disarm_motors();
 		}
 
-		if(get_dcm_matrix().c.z>0.5f){//倾角小于60度
+		if(get_dcm_matrix().c.z>0.5f&&get_accel_filt().z<0){//倾角小于60度
 			safe_time=HAL_GetTick();
 		}else{
 			if((HAL_GetTick()-safe_time)>5000){//大倾角

@@ -399,7 +399,7 @@ void get_tfmini_data(uint8_t buf)
 }
 
 void get_vl53lxx_data(uint16_t distance_mm){
-	if(distance_mm>30&&distance_mm<4000){//4m以下数据才可靠
+	if(distance_mm>30&&distance_mm<2000){//2m以下数据才可靠
 		if(!rangefinder_state.alt_healthy){
 			rangefinder_state.alt_cm_filt.reset((float)distance_mm*0.1);//重置滤波器
 		}
