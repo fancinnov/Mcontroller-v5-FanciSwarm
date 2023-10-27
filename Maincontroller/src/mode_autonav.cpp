@@ -17,7 +17,7 @@ static float smooth_dt=0.0f;
 static bool get_first_pos=false;
 static uint32_t takeoff_time=0, lock_time=0, safe_time=0;
 static float yaw_delta=0.0f;
-static float jump_alt=10.0f;
+static float jump_alt=50.0f;
 static uint16_t land_detect=0;
 static float takeoff_alt=0.0f;
 bool mode_autonav_init(void){
