@@ -2300,11 +2300,9 @@ bool gyro_calibrate(void){
 	return gyro_cal_succeed;
 }
 
-static Vector3f mag_correct_silent, mag_correct_delta;
 static uint16_t clear_mag_correct_delta=0;
-uint16_t get_mag_lock_flag(void){
-	return clear_mag_correct_delta;
-}
+static float mag_2d_len=0.0f;
+static Vector3f mag_orin, mag_curr, mag_offset;
 void update_mag_data(void){
 #if USE_MAG
 	mag.x = qmc5883_data.magf.x;
@@ -2328,28 +2326,31 @@ void update_mag_data(void){
 		_mag_filter.set_cutoff_frequency(100, mag_filt_hz);
 		initial_mag=true;
 	}else{
-		mag_corrected=true;
 		if(robot_state==STATE_TAKEOFF||robot_state==STATE_LANDED){//起飞时禁用磁罗盘
 			mag_corrected=false;
-			clear_mag_correct_delta=500;
-			mag_correct_delta.zero();
+			clear_mag_correct_delta=300;
 		}else if(robot_state==STATE_FLYING){
 			if(clear_mag_correct_delta>0){
 				mag_corrected=false;
-				if(clear_mag_correct_delta==1){
-					mag_correct_delta=mag_correct-mag_correct_silent;
+				if(clear_mag_correct_delta==1){//电流磁偏
+					mag_2d_len=safe_sqrt(mag_orin.x*mag_orin.x+mag_orin.y*mag_orin.y);
+					mag_curr.x=mag_2d_len*cos(yaw_rad);
+					mag_curr.y=-mag_2d_len*sin(yaw_rad);
+					mag_offset.x=mag_filt.x-mag_curr.x;
+					mag_offset.y=mag_filt.y-mag_curr.y;
+					mag_correct-=mag_offset;
+					_mag_filter.reset(mag_correct);
 				}
 				clear_mag_correct_delta--;
 			}else{
-				mag_correct-=mag_correct_delta;
-				mag_filt = _mag_filter.apply(mag_correct);
+				mag_corrected=true;
+				mag_correct-=mag_offset;
 			}
 		}else{
-			mag_correct_silent=mag_correct;
-			clear_mag_correct_delta=0;
-			mag_correct_delta.zero();
-			mag_filt = _mag_filter.apply(mag_correct);
+			mag_orin=mag_filt;
+			mag_corrected=true;
 		}
+		mag_filt = _mag_filter.apply(mag_correct);
 	}
 #endif
 }
@@ -3025,7 +3026,6 @@ void takeoff_start(float alt_cm)
     _takeoff_alt_delta = alt_cm;
     takeoff_alt=get_pos_z();
     set_return(false);
-    set_thr_force_decrease(true);//起飞时限制油门
 }
 
 bool takeoff_triggered( float target_climb_rate)
@@ -3042,12 +3042,11 @@ bool takeoff_triggered( float target_climb_rate)
     return true;
 }
 
-void takeoff_stop()
+void takeoff_stop(void)
 {
 	_takeoff=false;
 	_takeoff_running = false;
 	_takeoff_start_ms = 0;
-	set_thr_force_decrease(false);//起飞时禁止限制油门
 }
 
 // returns pilot and takeoff climb rates

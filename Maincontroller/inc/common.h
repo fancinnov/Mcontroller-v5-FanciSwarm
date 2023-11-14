@@ -153,7 +153,7 @@
 #endif
 
 #ifndef RANGEFINDER_GAIN_DEFAULT
- # define RANGEFINDER_GAIN_DEFAULT 0.3f     // gain for controlling how quickly rangefinder range adjusts target altitude (lower means slower reaction)
+ # define RANGEFINDER_GAIN_DEFAULT 0.5f     // gain for controlling how quickly rangefinder range adjusts target altitude (lower means slower reaction)
 #endif
 
 #ifndef THR_SURFACE_TRACKING_VELZ_MAX
@@ -165,11 +165,11 @@
 #endif
 
 #ifndef RANGEFINDER_GLITCH_ALT_CM
- # define RANGEFINDER_GLITCH_ALT_CM  30.0f      // amount of rangefinder change to be considered a glitch
+ # define RANGEFINDER_GLITCH_ALT_CM  15.0f      // amount of rangefinder change to be considered a glitch
 #endif
 
 #ifndef RANGEFINDER_GLITCH_NUM_SAMPLES
- # define RANGEFINDER_GLITCH_NUM_SAMPLES    40   // number of rangefinder glitches in a row to take new reading
+ # define RANGEFINDER_GLITCH_NUM_SAMPLES    20   // number of rangefinder glitches in a row to take new reading
 #endif
 
 #ifndef PILOT_TKOFF_ALT_DEFAULT
@@ -240,7 +240,6 @@ bool get_thr_force_decrease(void);
 void set_thr_force_decrease(bool force_decrease);
 void compass_calibrate(void);
 bool get_force_autonav(void);
-uint16_t get_mag_lock_flag(void);
 
 float ahrs_pitch_rad(void);					//俯仰角弧度值
 float ahrs_roll_rad(void);					//滚转角弧度值
@@ -324,20 +323,16 @@ float get_channel_yaw_angle(void);
 void Logger_Cat_Callback(void);
 void Logger_Data_Callback(void);
 
-bool mode_althold_init(void);
-void mode_althold(void);
-bool mode_stabilize_init(void);
-void mode_stabilize(void);
 bool mode_autonav_init(void);
 void mode_autonav(void);
-bool mode_poshold_init(void);
-void mode_poshold(void);
-bool mode_mecanum_init(void);
-void mode_mecanum(void);
-bool mode_perch_init(void);
-void mode_perch(void);
-void mode_ugv_a(void);
-void mode_ugv_v(void);
+
+/*
+ * demo函数声明
+ * */
+void uwb_send(void);
+void uwb_receive(void);
+void uwb_range_tx(void);
+void uwb_range_rx(void);
 
 // Documentation of GLobals:
 typedef union {

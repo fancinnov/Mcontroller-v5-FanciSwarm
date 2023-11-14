@@ -11,15 +11,15 @@ static bool jump=true;
 static bool use_gcs=false, use_rc=false;
 static bool execute_land=false;
 static bool reach_target_point=false;
-static Vector3f ned_target_pos, ned_last_pos, ned_target_pos_smooth;
-static Vector2f ned_target_dis_2d, ned_dis_2d, ned_dis_2d_smooth;
-static float smooth_dt=0.0f;
+static Vector3f ned_target_pos;
+static Vector2f ned_target_dis_2d, ned_dis_2d, vel_desired;
 static bool get_first_pos=false;
 static uint32_t takeoff_time=0, lock_time=0, safe_time=0;
 static float yaw_delta=0.0f;
-static float jump_alt=50.0f;
+static float jump_alt=0.0f;
 static uint16_t land_detect=0;
 static float takeoff_alt=0.0f;
+static bool hit_target_takeoff_alt=true;
 bool mode_autonav_init(void){
 	if(motors->get_armed()){//电机未锁定,禁止切换至该模式
 		Buzzer_set_ring_type(BUZZER_ERROR);
@@ -69,8 +69,12 @@ void mode_autonav(void){
 		target_climb_rate=0.0f;
 	}
 
-	if(get_mag_lock_flag()>0){
-		target_yaw_rate=0.0f;
+	if(!hit_target_takeoff_alt){
+		if(rangefinder_state.alt_healthy&&abs(rangefinder_state.alt_cm + get_vel_z()*0.2 - takeoff_alt)<10.0f){
+			hit_target_takeoff_alt=true;
+			pos_control->shift_alt_target(-pos_control->get_alt_error());
+			takeoff_stop();
+		}
 	}
 
 	// Alt Hold State Machine Determination
@@ -122,7 +126,8 @@ void mode_autonav(void){
 				disarm_motors();
 				break;
 			}
-			takeoff_start(takeoff_alt-jump_alt);
+			takeoff_start(takeoff_alt);
+			hit_target_takeoff_alt=false;
 			// indicate we are taking off
 			set_land_complete(false);
 			// clear i terms
@@ -147,7 +152,7 @@ void mode_autonav(void){
 
 		// get take-off adjusted pilot and takeoff climb rates
 		if(ch7<0.0f||target_climb_rate>=0.0f){
-			target_climb_rate=30.0f;//给一个初速度
+			target_climb_rate=50.0f;//给一个初速度
 		}
 
 		get_takeoff_climb_rates(target_climb_rate, takeoff_climb_rate);
@@ -202,6 +207,10 @@ void mode_autonav(void){
 			ch7=0.5;//强制在位置模式下降落
 		}
 
+		if((HAL_GetTick()-takeoff_time)<10000){//起飞10s内禁止glitch
+			rangefinder_state.glitch_count=0;
+		}
+
 		if(ch7>=0.7&&ch7<=1.0){//姿态模式
 			target_yaw+=target_yaw_rate*_dt;
 			attitude->input_euler_angle_roll_pitch_yaw(target_roll, target_pitch, target_yaw, true);
@@ -244,38 +253,28 @@ void mode_autonav(void){
 				if(!get_first_pos){
 					ned_target_pos.x=get_mav_x_target()*cosf(yaw_delta)+get_mav_y_target()*sinf(yaw_delta);
 					ned_target_pos.y=-get_mav_x_target()*sinf(yaw_delta)+get_mav_y_target()*cosf(yaw_delta);
-					ned_last_pos=ned_target_pos;
-					ned_target_pos_smooth=ned_target_pos;
-					smooth_dt=0.0f;
 					get_first_pos=true;
 				}
 				if(reach_target_point){
 					ned_target_pos.x=get_mav_x_target()*cosf(yaw_delta)+get_mav_y_target()*sinf(yaw_delta);
 					ned_target_pos.y=-get_mav_x_target()*sinf(yaw_delta)+get_mav_y_target()*cosf(yaw_delta);
 				}
-				ned_target_dis_2d.x=ned_target_pos.x-get_pos_x();
-				ned_target_dis_2d.y=ned_target_pos.y-get_pos_y();
-				if(ned_target_dis_2d.length()<50){//距离目标点小于50cm认为到达
-					reach_target_point=true;
-					ned_last_pos=ned_target_pos;
-					ned_target_pos_smooth=ned_target_pos;
-					smooth_dt=0.0f;
+
+				ned_dis_2d.x=ned_target_pos.x-pos_control->get_pos_target().x;//重新计算当前目标与上一个目标点的距离
+				ned_dis_2d.y=ned_target_pos.y-pos_control->get_pos_target().y;
+				if(ned_dis_2d.length()>1.0f){
+					reach_target_point=false;
+					vel_desired=ned_dis_2d.normalized()*30;//设置30cm/s的跟踪速度
+					pos_control->set_desired_velocity_xy(vel_desired.x, vel_desired.y);
 				}else{
-					ned_dis_2d.x=ned_target_pos.x-ned_last_pos.x;//重新计算当前目标与上一个目标点的距离
-					ned_dis_2d.y=ned_target_pos.y-ned_last_pos.y;
-					if(ned_dis_2d.length()>0.1){
-						reach_target_point=false;
-					}
-					if(!reach_target_point){
-						smooth_dt+=_dt;
-						ned_dis_2d_smooth=ned_dis_2d.normalized()*30*smooth_dt;
-						if(ned_dis_2d_smooth.length()<ned_dis_2d.length()){//将目标点进行平滑修正
-							ned_target_pos_smooth.x=ned_last_pos.x+ned_dis_2d_smooth.x;
-							ned_target_pos_smooth.y=ned_last_pos.y+ned_dis_2d_smooth.y;
-						}
+					pos_control->set_desired_velocity_xy(0.0f, 0.0f);
+					ned_target_dis_2d.x=ned_target_pos.x-get_pos_x();
+					ned_target_dis_2d.y=ned_target_pos.y-get_pos_y();
+					if(ned_target_dis_2d.length()<50.0){//距离目标点小于50cm认为到达
+						reach_target_point=true;
 					}
 				}
-				pos_control->set_xy_target(ned_target_pos_smooth.x, ned_target_pos_smooth.y);
+
 				pos_control->update_xy_controller(_dt, get_pos_x(), get_pos_y(), get_vel_x(), get_vel_y());
 				attitude->input_euler_angle_roll_pitch_yaw(pos_control->get_roll(), pos_control->get_pitch(), target_yaw, true);
 				target_climb_rate=get_mav_vz_target();
