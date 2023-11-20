@@ -265,7 +265,7 @@ void mode_autonav(void){
 				if(ned_dis_2d.length()>1.0f){
 					reach_target_point=false;
 					vel_desired=ned_dis_2d.normalized()*30;//设置30cm/s的跟踪速度
-					pos_control->set_desired_velocity_xy(vel_desired.x, vel_desired.y);
+					pos_control->shift_pos_xy_target(vel_desired.x*_dt, vel_desired.y*_dt);
 				}else{
 					pos_control->set_desired_velocity_xy(0.0f, 0.0f);
 					ned_target_dis_2d.x=ned_target_pos.x-get_pos_x();
